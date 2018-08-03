@@ -27,7 +27,7 @@
 
       foreach($readers as $reader) {
         $reader = trim($reader);
-        $reader = SpecialCases($reader,null);
+        $reader = specialCases($reader,null);
         if (array_key_exists($reader, $readerList)) {
           $readerList[$reader] += 1;
         } else {
