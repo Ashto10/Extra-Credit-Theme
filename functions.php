@@ -23,8 +23,8 @@ function getBio($name) {
 
   $pages = get_pages($args);
   foreach ($pages as $page) {
-    $title = trim($page->post_title);
-    $name = trim($name);
+    $title = strToLower(trim($page->post_title));
+    $name = strToLower(trim($name));
     if ($title == $name) {
       return get_permalink($page->ID);
     }
@@ -182,7 +182,7 @@ $meta_boxes[] = array(
     ),
     array(
       'name' => 'Hosted By',
-      'desc' => 'Name of the episode\'s host',
+      'desc' => 'Is this a side project episode (like Pop Quiz)? Place the host name here.',
       'id' => $prefix . 'host',
       'type' => 'text',
       'std' => '',
@@ -420,12 +420,45 @@ function create_bootstrap_menu( $theme_location ) {
   echo $menu_list;
 }
 
-function SpecialCases($a, $b) {
-  if ($a == "Fruithag" ) {
+function specialCases($name, $category = "") {
+  if ($name == "Fruithag" ) {
     return "Positive Stress";
-  } else if ($a == "Ashto" && $b == "reader") {
-    return "Smoke Alarm";
   } else {
-    return $a;
+    return $name;
   }
+}
+
+function generateCreditList($metaTags, $nameToTestFor, $posts) {
+  $arr = [];
+  $nameToTestFor = strToLower($nameToTestFor);
+  
+  foreach($posts as $p) {
+    $nameList = [];    
+
+    foreach($metaTags as $tag) {
+      $addition = get_post_meta($p->ID,$tag,true);
+      $addition = str_getcsv(strToLower($addition),",",'"');
+      $nameList = array_merge($nameList, $addition);
+    }
+
+    foreach($nameList as $name) {
+      $name = specialCases($name);
+      if (trim($name) == $nameToTestFor) {
+        array_push($arr, array(
+          'epName' => get_the_title($p),
+          'epLink' => get_post_permalink($p)
+        ));
+      }
+    }
+  }
+
+  return $arr;
+}
+
+function buildCredits($creditList) {
+  $str = "";
+  foreach($creditList as $credit) {
+    $str .= "<a class='credit' href=".$credit['epLink'].">".$credit['epName']."</a>";
+  }
+  return $str;
 }
