@@ -1,47 +1,47 @@
-<?php get_header();
+<?php
 /*
  * Template Name: Stats Page
  * Description: 
  */
+
+get_header();
+
+$args = array(
+  'post_status' => 'publish',
+  'posts_per_page' => -1,
+  'category_name' => 'episodes',
+  'orderby' => 'date',
+  'order' => 'DESC'
+);
+$posts = get_posts($args);
+wp_reset_postdata();
+
+$rp = getReaderPages();
+$readerList = [];
+
+foreach($posts as $p) {
+  $readers = str_getcsv(get_post_meta($p->ID,"ecinfo_readers",true),",",'"');
+
+  foreach($readers as $reader) {
+    $cleanedName = specialCases(strToLower(trim($reader)));
+    if (array_key_exists($cleanedName, $readerList)) {
+      $readerList[$cleanedName]['count'] += 1;
+    } else {
+      $readerList[$cleanedName] = array(
+        'name' => $reader,
+        'link' => isset($rp[$cleanedName]) ? $rp[$cleanedName] : null,
+        'count' => 1
+      );
+    }
+  }
+}
+
+ksort($readerList);
+
 ?>
 
 <main class="container">
   <div class="table-responsive">
-    <?php
-    //Get all posts metadata
-    $args = array(
-      'post_status' => 'publish',
-      'posts_per_page' => -1,
-      'category_name' => 'episodes',
-      'orderby' => 'date',
-      'order' => 'DESC'
-    );
-
-    $posts = get_posts($args);
-
-    $readerList = array();
-
-    foreach($posts as $p) {
-      $readers = get_post_meta($p->ID,"ecinfo_readers",true);
-      $readers = str_getcsv($readers,",",'"');
-
-      foreach($readers as $reader) {
-        $reader = trim($reader);
-        $reader = specialCases($reader,null);
-        if (array_key_exists($reader, $readerList)) {
-          $readerList[$reader] += 1;
-        } else {
-          $readerList[$reader] = 1;
-        }
-      }
-
-    }
-
-    ksort($readerList);
-
-    wp_reset_postdata();
-    ?>
-
     <table class="table table-striped table-bordered">
       <thead>
         <tr>
@@ -50,21 +50,18 @@
         </tr>
       </thead>
       <tbody>
-        <?php
-
-        foreach ($readerList as $key => $value) {
-          $linkToPage = getBio($key);
-
-          if ($linkToPage) {
-            echo "<tr><td><a href=".getBio($key).">$key</a></td><td>$value</td></tr>";  
-          } else {
-            echo "<tr><td>$key</td><td>$value</td></tr>"; 
-          }
-        }
-        ?>
+        <?php foreach ($readerList as $reader): ?>
+        <tr>
+          <td>
+            <?= $reader['link'] ? "<a href={$reader['link']}>{$reader['name']}</a>" : "{$reader['name']}"; ?>
+          </td>
+          <td><?= $reader['count']; ?></td>
+        </tr>
+        <?php endforeach?>
       </tbody>
     </table>
 
   </div>
 </main>
+
 <?php get_footer(); ?>

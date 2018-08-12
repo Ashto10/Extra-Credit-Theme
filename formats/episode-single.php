@@ -1,49 +1,18 @@
 <?php
-/*
-    FORMAT THE WORDPRESS CONTENT INTO THE PROPER ORDER
-    */
+$content = apply_filters('the_content',get_the_content());
 
-/*
-    Properly load the page content
-    */
-$content = get_the_content();
-$content = apply_filters('the_content',$content);
-
-/*
-    First, seperate the podcast player content from the rest of the episode documentation
-    */
-$content = explode('<div class="powerpress_player"',$content);
+$content = explode("<p>[post-show-notes]</p>",$content);
 $showNotes = $content[0];
-$audioPlayer = '<div class="powerpress_player"'.$content[1];
+$additionalNotes = $content[1];
 
-/*
-    Look for an <hr> tag in the content. If one exists, that means that post-episode content exists. First, clean up the hr tag itself to make it easier to parse.
-    */
-str_replace(array("<hr>","<hr/>","<hr / >"),"<hr />",$showNotes);
-/*
-    Now seperate the post-episode content from the show notes
-    */
-$temp = explode("<hr />",$showNotes);
-/*
-    Doublecheck to make sure that there actually is post-episode content, and not that someone hit return or space or something after an <hr> tag
-    */            
-$blankTest = trim(strip_tags($temp[1]), "\t\n\r\0\x0B\xC2\xA0");
-$blankTest = str_replace("&nbsp;","",$blankTest);
-if ($blankTest != '') {
-  /*
-        Reassign $shownotes so it doesn't duplicate content
-        */
-  $showNotes = $temp[0];
-  $additionalNotes = "<h3>Additional Fun</h3>".$temp[1];
-}
+$rp = getReaderPages();
+
 ?>
 
 <div class="col-12 col-md-10 mx-auto single">
   <div class="single-header">
-    <h2 class="page-title"><?php the_title();?></h2>
-    <div class="thumbnail-container">
-      <?php the_post_thumbnail(); ?>
-    </div>
+    <h2 class="page-title"><?php the_title(); ?></h2>
+    <div class="thumbnail-container"><?php the_post_thumbnail(); ?></div>
     <p>
       <span>Episode <?= get_post_meta(get_the_ID(), 'ecinfo_epnum', true);?></span> &mdash; <span>Released <?php the_date('M j Y');?></span>
     </p>
@@ -54,40 +23,79 @@ if ($blankTest != '') {
 
     <p>
       <?php
-      $host = get_reader("host","");
-      if ($host != "") {
-        echo "Hosted by $host ";
-      }
+      $host = formatCredits((getListFromCategory('host', $rp)));
+      if ($host) { echo "Hosted by $host<br/>"; }
+
+      $guests = getListFromCategory('guests', $rp);
+      
+      $readers = formatCredits((getListFromCategory('readers', $rp)), count($guests) === 0);
+      $guests = formatCredits($guests);
+      
+      if ($readers) { echo "With $readers"; }
+      if ($guests) { echo ", and featuring $guests"; }
       ?>
-      <?= getCastList(); ?>
     </p>
 
     <p>
-      Edited by <?= get_reader("editor",""); ?>
-      <br />
       <?php
-      $provider = get_readers("provider","",false);
-      if ($provider != "") {
-        echo "Content provided by $provider<br />";
-      }
+      $editor = formatCredits((getListFromCategory('editor', $rp)));
+      if ($editor) { echo "Edited by $editor<br />"; }
 
+      $provider = formatCredits((getListFromCategory('provider', $rp)));
+      if ($provider) { echo "Content provided by $provider<br />"; }
+
+      $cover_artist = formatCredits((getListFromCategory('cover_artist', $rp)));
+      if ($cover_artist) { echo "Cover art by $cover_artist<br />"; }
       ?>
-      Cover art by <?= get_reader("cover_artist",""); ?>
     </p>
 
-    <span>Subject featured</span>
-    <ul><?= getInfoList("subjects"); ?></ul>
-    <span>Music used</span>
-    <ul><?= getInfoList("music"); ?></ul>
+    <div>
+      <?php
+      $subjects = getListFromCategory('subjects');
+      if ($subjects): ?>
+      <p class="list-title">Subject featured</p>
+      <ul>
+        <?php
+        foreach($subjects as $subject) {
+          echo "<li>$subject</li>";
+        }
+        ?>
+      </ul>
+      <?php endif; ?>
+    </div>
 
-    <?php
-    $doc = get_post_meta( get_the_ID(), 'ecinfo_doc', true );
-    if ($doc != "") {
-      echo "<a href='$doc'>Read the doc</a>";
-    }
-    ?>
+    <div>
+      <?php
+      $songs = getListFromCategory('music');
+      if ($songs): ?>
+      <p class="list-title">Music used</p>
+      <ul>
+        <?php
+        foreach($songs as $song) {
+          if (strpos($song, '[') !== false) {
+            $song = explode('[', $song);
+            $title = $song[0];
+            $artist = str_replace(']','',$song[1]);
+            echo "<li>$title by $artist</li>";
+          } else {
+            echo "<li>$song</li>";
+          }
+        }
+        ?>
+      </ul>
+      <?php endif; ?>
+    </div>
 
-    <div class="powerpress-player"><?= $audioPlayer;?></div>
+    <div>
+      <?php
+      $doc = get_post_meta( get_the_ID(), 'ecinfo_doc', true );
+      if ($doc) {
+        echo "<a href='$doc'>Read the doc</a>";
+      }
+      ?>
+    </div>
+
+    <div class="powerpress-player"><?= do_shortcode('[powerpress]');?></div>
 
     <div class="tags-container">
       <?php the_tags("","");?>
@@ -97,5 +105,5 @@ if ($blankTest != '') {
   <div class="additional-info">
     <?= $additionalNotes; ?>
   </div>
-  <?php endif ?>
+  <?php endif; ?>
 </div>

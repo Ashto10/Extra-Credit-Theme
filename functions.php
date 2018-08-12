@@ -14,112 +14,90 @@ function set_comment_data($commentdata){
   return $commentdata;
 }
 
+function getReaderPages() {
+  $pages = get_pages(array('post_type' => 'page'));
+  wp_reset_postdata();
+  $output = [];
 
-// Get biography page of reader by name
-function getBio($name) {
-  $args = array(
-    'post_type' => 'page'
-  );
-
-  $pages = get_pages($args);
   foreach ($pages as $page) {
-    $title = strToLower(trim($page->post_title));
-    $name = strToLower(trim($name));
-    if ($title == $name) {
-      return get_permalink($page->ID);
-    }
-  }
-
-  return null;
-}
-
-function getCastList() {
-  $guestsAreInEpisode = false;
-
-  if (get_readers("guests","",false)) {
-    $guestsAreInEpisode = true;
-  }
-
-  $output .= get_readers("readers","with ", $guestsAreInEpisode);
-  if ($guestsAreInEpisode) {
-    $output .= get_readers("guests",", and featuring ",false);
+    $name = strToLower(trim($page->post_title));
+    $output[$name] = get_permalink($page->ID);
   }
 
   return $output;
 }
 
-function get_reader($title, $pre) {
-  $reader = get_post_meta(get_the_ID(),'ecinfo_' . $title,true);
+function getListFromCategory($category, $pages) {
+  $items = get_post_meta(get_the_ID(), 'ecinfo_' . $category, true);
+  if ($items === "") { return []; }
 
-  $linkToBio = getBio($reader);
-  if($linkToBio) {
-    return $pre . "<a href='$linkToBio'>$reader</a>";
+  if (!$pages) { return str_getcsv($items,"\n",'"'); }
+
+  $items = str_getcsv($items,',','"');
+  $output = [];
+
+  foreach ($items as $name) {
+    $name = trim($name);
+    $cleanedName = specialCases(strToLower($name));
+    $output[] = isset($pages[$cleanedName]) ? "<a href='{$pages[$cleanedName]}'>$name</a>" : $name;
+  }
+
+  return $output;
+}
+
+function formatCredits($creditsArray, $allowAnd= true) {
+  $str = implode(',', $creditsArray);
+  $str = str_replace(",", ', ', $str);
+
+  $lastCommaPos = strrpos($str, ',');
+  if($allowAnd && $lastCommaPos !== false) {
+    $str = substr_replace($str, count($creditsArray) > 2 ? ', and ' : ' and ', $lastCommaPos, 1);
+  }
+
+  return $str;
+}
+
+function specialCases($name, $category = "") {
+  if ($name === "fruithag" ) {
+    return "positive stress";
   } else {
-    return $pre . $reader;
+    return $name;
   }
 }
 
-function get_readers($title, $pre, $excludeAnd) {
-  $output .= $pre;
+function generateCreditList($metaTags, $nameToTestFor, $posts) {
+  $arr = [];
+  $nameToTestFor = strToLower($nameToTestFor);
 
-  $queries = get_post_meta(get_the_ID(), 'ecinfo_' . $title, true);
-  $queries = str_getcsv($queries,",",'"');
+  foreach($posts as $p) {
+    $nameList = [];    
 
-  for($i = 0; $i < count($queries); $i++) {
-    $query = $queries[$i];
-    $linkToBio = getBio($query);
-    if($linkToBio) {
-      $output .= "<a href='$linkToBio'>$query</a>";
-    } else {
-      $output .= "$query";
+    foreach($metaTags as $tag) {
+      $addition = get_post_meta($p->ID,$tag,true);
+      $addition = str_getcsv(strToLower($addition),",",'"');
+      $nameList = array_merge($nameList, $addition);
     }
 
-    if ($i < count($queries) - 1 && (count($queries) > 2 || $excludeAnd)) {
-      $output .= ", ";
-    }
-
-    if ($i == count($queries) - 2 && !$excludeAnd) {
-      $output .= " and ";
+    foreach($nameList as $name) {
+      $name = specialCases($name);
+      if (trim($name) == $nameToTestFor) {
+        array_push($arr, array(
+          'epName' => get_the_title($p),
+          'epLink' => get_post_permalink($p)
+        ));
+      }
     }
   }
 
-  return $output;
+  return $arr;
 }
 
-function getInfoList($category) {
-  $queries = get_post_meta(get_the_ID(), 'ecinfo_' . $category, true);
-  $queries =str_getcsv($queries,"\n",'"');
-  $output = "";
-
-  foreach ($queries as $query) {
-    if(checkIfSite($query)) {
-      $query = filter_var($query,FILTER_SANITIZE_URL);
-      $output .= "<li><a href='http://www.$query' target='_blank' rel='noreferrer'>$query</a></li>";
-    } else {
-      $output .= "<li>$query</li>";
-    }
+function buildCredits($creditList) {
+  $str = "";
+  foreach($creditList as $credit) {
+    $str .= "<a class='credit' href=".$credit['epLink'].">".$credit['epName']."</a>";
   }
-
-  return $output;
-}
-
-function checkIfSite($string) {
-  $endings = array (
-    ".com",
-    ".net",
-    ".org"
-  );
-
-  foreach ($endings as $endsIn) {
-
-    $temp = strlen($string) - strlen($endsIn);
-    $result = strpos($string, $endsIn, $temp);
-
-    if($result !== false) {
-      return true;
-    }
-  }
-  return false;
+  return $str;
 }
 
 // Add support Featured Images
@@ -206,7 +184,7 @@ $meta_boxes[] = array(
     ),
     array(
       'name' => 'Main Readers',
-      'desc' => 'Main cast readers in episode<br/><em>separate with commas</em>',
+      'desc' => 'Main cast readers in episode<br/><em>Separate with commas</em>',
       'id' => $prefix . 'readers',
       'type' => 'textarea',
       'std' => '',
@@ -214,7 +192,7 @@ $meta_boxes[] = array(
     ),
     array(
       'name' => 'Guest Readers',
-      'desc' => 'Guest readers in episode<br/><em>separate with commas</em>',
+      'desc' => 'Guest readers in episode<br/><em>Separate with commas</em>',
       'id' => $prefix . 'guests',
       'type' => 'textarea',
       'std' => '',
@@ -230,7 +208,7 @@ $meta_boxes[] = array(
     ),
     array(
       'name' => 'Music used',
-      'desc' => 'Music used in episode<br /><em>One song per line, preferablly formatted "song name by artist"</em>',
+      'desc' => 'Music used in episode<br /><em>One song per line, formatted "song name [artist]"</em>',
       'id' => $prefix . 'music',
       'type' => 'textarea',
       'std' => '',
@@ -246,7 +224,7 @@ $meta_boxes[] = array(
     ),
     array(
       'name' => 'Content Provider',
-      'desc' => 'Who submitted the doc.<br/><em>separate with commas</em>',
+      'desc' => 'Who submitted the doc.<br/><em>Separate with commas</em>',
       'id' => $prefix . 'provider',
       'type' => 'textarea',
       'std' => '',
@@ -418,47 +396,4 @@ function create_bootstrap_menu( $theme_location ) {
   }
 
   echo $menu_list;
-}
-
-function specialCases($name, $category = "") {
-  if ($name == "Fruithag" ) {
-    return "Positive Stress";
-  } else {
-    return $name;
-  }
-}
-
-function generateCreditList($metaTags, $nameToTestFor, $posts) {
-  $arr = [];
-  $nameToTestFor = strToLower($nameToTestFor);
-  
-  foreach($posts as $p) {
-    $nameList = [];    
-
-    foreach($metaTags as $tag) {
-      $addition = get_post_meta($p->ID,$tag,true);
-      $addition = str_getcsv(strToLower($addition),",",'"');
-      $nameList = array_merge($nameList, $addition);
-    }
-
-    foreach($nameList as $name) {
-      $name = specialCases($name);
-      if (trim($name) == $nameToTestFor) {
-        array_push($arr, array(
-          'epName' => get_the_title($p),
-          'epLink' => get_post_permalink($p)
-        ));
-      }
-    }
-  }
-
-  return $arr;
-}
-
-function buildCredits($creditList) {
-  $str = "";
-  foreach($creditList as $credit) {
-    $str .= "<a class='credit' href=".$credit['epLink'].">".$credit['epName']."</a>";
-  }
-  return $str;
 }
