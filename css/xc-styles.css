@@ -171,7 +171,7 @@ nav.navbar.navbar-dark .dropdown-menu a.dropdown-item {
 .single {
   background: white;
   margin-top: 2.5em;
-  padding-bottom: 1.5em;
+  padding: 0;
   border-radius: 10px;
 }
 
@@ -192,7 +192,7 @@ nav.navbar.navbar-dark .dropdown-menu a.dropdown-item {
 }
 
 .main-info {
-  margin: 1em;
+  margin: 1em 1.75em;
   font-size: 0.95em;
 }
 .main-info p.list-title {
@@ -248,8 +248,26 @@ nav.navbar.navbar-dark .dropdown-menu a.dropdown-item {
 }
 
 .additional-info {
-  border-top: 1px solid gray;
-  padding-top: 1em;
+  padding: 1em 1.75em;
+  background: whitesmoke;
+}
+.additional-info p {
+  width: 100%;
+}
+.additional-info div.wp-caption {
+  width: 45.75% !important;
+  margin: 2%;
+  box-sizing: border-box;
+  display: inline-block;
+}
+.additional-info div.wp-caption img {
+  width: 100%;
+  height: auto;
+}
+.additional-info div.wp-caption p.wp-caption-text {
+  border: 1px solid #DDD;
+  background: white;
+  text-align: center;
 }
 
 .comments-container {

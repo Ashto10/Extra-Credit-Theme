@@ -397,3 +397,47 @@ function create_bootstrap_menu( $theme_location ) {
 
   echo $menu_list;
 }
+
+add_action( 'after_setup_theme', 'custom_buttons_setup' );
+
+if ( ! function_exists( 'custom_buttons_setup' ) ) {
+  function custom_buttons_setup(){
+    add_action( 'admin_init', 'custom_buttons_add_editor_styles' );
+    add_action( 'init', 'custom_buttons' );
+  }
+}
+
+if ( ! function_exists( 'custom_buttons_add_editor_styles' ) ) {
+  function custom_buttons_add_editor_styles() {
+    add_editor_style( 'custom-editor-style.css' );
+  }
+}
+
+if ( ! function_exists( 'custom_buttons' ) ) {
+  function custom_buttons() {
+    if ( ! current_user_can( 'edit_posts' ) && ! current_user_can( 'edit_pages' ) ) {
+      return;
+    }
+
+    if ( get_user_option( 'rich_editing' ) !== 'true' ) {
+      return;
+    }
+
+    add_filter( 'mce_external_plugins', 'custom_buttons_add' );
+    add_filter( 'mce_buttons', 'custom_buttons_register' );
+  }
+}
+
+if ( ! function_exists( 'custom_buttons_add' ) ) {
+  function custom_buttons_add( $plugin_array ) {
+    $plugin_array['post-show-notes'] = get_template_directory_uri().'/js/tinymce_buttons.js';
+    return $plugin_array;
+  }
+}
+
+if ( ! function_exists( 'custom_buttons_register' ) ) {
+  function custom_buttons_register( $buttons ) {
+    array_push( $buttons, 'post-show-notes' );
+    return $buttons;
+  }
+}

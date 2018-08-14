@@ -1,51 +1,37 @@
+function resizeIframes() {
+  $("iframe").each(function() {
+    var $el = $(this);
+    var newWidth = $el.parent().width();
+    $el
+      .width(newWidth)
+      .height(newWidth * $el.attr('aspectRatio'));
+  });
+}
+
+function initializeIframes() {
+  $("iframe").each(function() {
+    $(this)
+      .attr('aspectRatio', this.height / this.width)
+      .removeAttr('height')
+      .removeAttr('width');
+  });
+}
+
 jQuery(document).ready(function( $ ) {
-    
-    function sqaureImg () {
-        var sizeCap = $('.squareImg:first').width();
-        
-        $('.squareImg').height(sizeCap);
-    }
-    
+
+  function sqaureImg () {
+    var sizeCap = $('.squareImg:first').width();
+    $('.squareImg').height(sizeCap);
+  }
+
+  $(window).resize(function() {
     sqaureImg();
-    
-    $( window ).resize(function() {
-        sqaureImg();
-    });
-    
-    // Find all YouTube videos
-    var $allVideos = $("iframe[src^='//www.youtube.com']"),
+    resizeIframes();
+  });
 
-        // The element that is fluid width
-        $fluidEl = $(".epPost-afterContent");
+  // Run once on page load
+  sqaureImg();
+  initializeIframes();
+  resizeIframes();
 
-    // Figure out and save aspect ratio for each video
-    $allVideos.each(function() {
-
-      $(this)
-        .data('aspectRatio', this.height / this.width)
-
-        // and remove the hard coded width/height
-        .removeAttr('height')
-        .removeAttr('width');
-
-    });
-
-    // When the window is resized
-    $(window).resize(function() {
-
-      var newWidth = $fluidEl.width();
-
-      // Resize all videos according to their own aspect ratio
-      $allVideos.each(function() {
-
-        var $el = $(this);
-        $el
-          .width(newWidth)
-          .height(newWidth * $el.data('aspectRatio'));
-
-      });
-
-    // Kick off one resize to fix all videos on page load
-    }).resize();
-    
 });

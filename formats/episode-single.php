@@ -1,7 +1,7 @@
 <?php
 $content = apply_filters('the_content',get_the_content());
 
-$content = explode("<p>[post-show-notes]</p>",$content);
+$content = explode('<hr class="post-show-notes" />',$content);
 $showNotes = $content[0];
 $additionalNotes = $content[1];
 
@@ -102,7 +102,8 @@ $rp = getReaderPages();
     </div>
   </div>
   <?php if($additionalNotes): ?>
-  <div class="additional-info">
+  <div class="additional-info" data-masonry='{ "itemSelector": ".wp-caption", "columnWidth": 200 }'>
+    <h1>Additional Fun</h1>
     <?= $additionalNotes; ?>
   </div>
   <?php endif; ?>

@@ -1,0 +1,9 @@
+#tinymce hr.post-show-notes:after {
+  display: block;
+  color: gray;
+  content: 'Additional Fun content below';
+  width: 100%;
+  border-top: 2px dashed gray;
+  border-bottom: 2px dashed gray;
+  pointer-events:none;
+}
