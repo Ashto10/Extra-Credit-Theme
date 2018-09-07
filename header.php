@@ -13,7 +13,20 @@
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
 
-    <?php wp_head(); ?>
+    <!-- Twitter -->
+    <?php
+    foreach($GLOBALS['twitterMetaTags'] as $key => $val) {
+      echo "<meta name='twitter:$key' content='$val'/>";
+    }
+    ?>
+    
+    <!-- OpenGraph -->
+    <?php
+    foreach($GLOBALS['ogMetaTags'] as $key => $val) {
+      echo "<meta property='og:$key' content='$val'/>";
+    }
+    wp_head();
+    ?>
   </head>
   <body>
     <header>

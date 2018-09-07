@@ -212,7 +212,7 @@ nav.navbar.navbar-dark .dropdown-menu a.dropdown-item {
 }
 
 .tags-container {
-  padding-top: 0.5em;
+  padding: 0.5em 0;
 }
 .tags-container a {
   display: inline-block;
@@ -255,7 +255,7 @@ nav.navbar.navbar-dark .dropdown-menu a.dropdown-item {
   width: 100%;
 }
 .additional-info div.wp-caption {
-  width: 45.75% !important;
+  width: 45% !important;
   margin: 2%;
   box-sizing: border-box;
   display: inline-block;
