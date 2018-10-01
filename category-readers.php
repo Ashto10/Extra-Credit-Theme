@@ -2,7 +2,7 @@
 
 <main class="container">
 
-  <?php 
+  <?php
   $wpb_all_query = new WP_Query(array('post_type'=>'page', 'post_status'=>'publish', 'posts_per_page'=>-1,'category_name' => 'regulars'));
   ?>
 
@@ -17,6 +17,18 @@
 
       <?php wp_reset_postdata(); ?>
       <?php 
+      $wpb_all_query = new WP_Query(array('post_type'=>'page', 'post_status'=>'publish', 'posts_per_page'=>-1,'category_name' => 'supporting'));
+      ?>
+
+      <?php if ( $wpb_all_query->have_posts() ) : ?>
+      <?php while ( $wpb_all_query->have_posts() ) : $wpb_all_query->the_post();
+      get_template_part( 'formats/reader-category', get_post_format() );
+      endwhile; ?>
+
+      <?php endif; ?>
+
+      <?php wp_reset_postdata(); ?>
+      <?php 
       $wpb_all_query = new WP_Query(array('post_type'=>'page', 'post_status'=>'publish', 'posts_per_page'=>-1,'category_name' => 'occasional'));
       ?>
 
@@ -24,7 +36,7 @@
       <?php while ( $wpb_all_query->have_posts() ) : $wpb_all_query->the_post();
       get_template_part( 'formats/reader-category', get_post_format() );
       endwhile; ?>
-      
+
       <?php endif; ?>
     </div>
   </section>
