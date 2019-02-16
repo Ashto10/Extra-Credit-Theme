@@ -1,3 +1,7 @@
+>**DEPRECIATED**
+>
+>Major rewrite pending, leaving this git active solely for archival purposes (and as an example of how not to bodge things together)
+
 # Extra Credit Theme
 *The Beanstalks of Github repositories.*
 
